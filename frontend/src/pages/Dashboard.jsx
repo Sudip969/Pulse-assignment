@@ -53,7 +53,8 @@ const Dashboard = () => {
     fetchVideos();
     
     // Setup Socket
-    const socket = io('http://localhost:5000');
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const socket = io(API_URL);
     
     if (user?.tenantId) {
       socket.on(`video-status-${user.tenantId}`, (data) => {
