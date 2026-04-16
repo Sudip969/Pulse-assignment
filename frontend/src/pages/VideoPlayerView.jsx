@@ -16,7 +16,8 @@ const VideoPlayerView = () => {
   // We need to update backend to accept token from query params or cookies for the stream endpoint.
   // For the sake of this prompt, we'll pass it in the URL.
   
-  const videoSrc = `http://localhost:5000/api/videos/stream/${id}?token=${token}`;
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const videoSrc = `${API_URL}/api/videos/stream/${id}?token=${token}`;
 
   return (
     <div className="app-container">
