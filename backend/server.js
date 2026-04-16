@@ -14,6 +14,14 @@ const allowedOrigins = [
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
+// Check critical environment variables
+if (!process.env.MONGO_URI) {
+  console.warn('WARNING: MONGO_URI is not defined in environment variables.');
+}
+if (!process.env.JWT_SECRET) {
+  console.warn('WARNING: JWT_SECRET is not defined in environment variables.');
+}
+
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
@@ -47,6 +55,15 @@ const videoRoutes = require('./routes/videos');
 app.use('/api/auth', authRoutes);
 app.use('/api/videos', videoRoutes);
 
+// Health check route
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    uptime: process.uptime(),
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
 // Socket.io connection
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
@@ -58,11 +75,16 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 5000;
 
+// Start server immediately to satisfy Render's port binding requirement
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/pulse')
   .then(() => {
     console.log('Connected to MongoDB');
-    server.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
   })
-  .catch(err => console.error('MongoDB connection error:', err));
+  .catch(err => {
+    console.error('MongoDB connection error:', err);
+    console.log('Server is still running, but database-dependent routes will fail.');
+  });
